@@ -1,30 +1,34 @@
 import { create } from "zustand";
-import { AuthState, User } from "./auth.types";
+import { AuthState, LoginDTO } from "./auth.types";
+import { loginService } from "./auth.service";
 
-export const useAuthStore = create<AuthState>(set => ({
-    user: null,
-    token: null,
+export const useAuthStore = create<AuthState>((set) => ({
+    user: JSON.parse(localStorage.getItem("user") || "null"),
+    token: localStorage.getItem("token"),
 
-    login: async ({ email, password }) => {
-        if (email === "admin@erp.com" && password === "123456") {
-            const user: User = {
-                id: 1,
-                name: "Administrador",
-                user_type: "ADMIN"
-            };
+    login: async (data: LoginDTO) => {
+        const result = await loginService(data);
 
-            localStorage.setItem("token", "mock-token");
-            localStorage.setItem("user", JSON.stringify(user));
-
-            set({ user, token: "mock-token" });
-            return;
+        if (!result?.token || !result?.user) {
+            throw new Error("Resposta de login inválida.");
         }
 
-        throw new Error("Credenciais inválidas");
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.user));
+
+        set({
+            token: result.token,
+            user: result.user,
+        });
     },
 
     logout: () => {
-        localStorage.clear();
-        set({ user: null, token: null });
-    }
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        set({
+            user: null,
+            token: null,
+        });
+    },
 }));

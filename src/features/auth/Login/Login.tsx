@@ -1,39 +1,42 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginService } from "../auth.service";
+import { useAuthStore } from "../auth.store"; // ajuste o caminho se necessário
 import "./login.css";
 
 export default function Login() {
     const navigate = useNavigate();
+    const login = useAuthStore((state) => state.login);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    async function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setError(null);
 
         if (!email || !password) {
-            setError("Preencha email e senha");
+            setError("Preencha email e senha.");
             return;
         }
 
         try {
             setLoading(true);
 
-            const { token, user } = await loginService({ email, password });
+            // login real via store -> service -> API /login
+            await login({ email, password });
 
-            localStorage.setItem("token", token);
-            localStorage.setItem("user", JSON.stringify(user));
-            console.log(user)
-
+            // se chegou aqui, autenticou com sucesso
             navigate("/");
-
-            console.log("login realizado")
         } catch (err: any) {
-            setError(err.response?.data?.message || "Erro ao realizar login");
+            const message =
+                err?.response?.data?.error ||
+                err?.response?.data?.message ||
+                err?.message ||
+                "Erro ao realizar login.";
+            setError(message);
         } finally {
             setLoading(false);
         }

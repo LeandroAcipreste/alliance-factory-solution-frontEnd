@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../features/auth/Login/Login";
+import { useAuthStore } from "../features/auth/auth.store";
 
 export default function AppRoutes() {
-    const isAuthenticated = Boolean(localStorage.getItem("token"));
+    const token = useAuthStore((state) => state.token);
+    const isAuthenticated = Boolean(token);
 
     return (
         <Routes>
